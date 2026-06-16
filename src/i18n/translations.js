@@ -8,7 +8,7 @@ export const translations = {
     },
     hero: {
       kicker: 'Demonstração de plantio',
-      title: 'Veja a Plantor trabalhando na sua lavoura',
+      title: 'Veja a plantadeira trabalhando no seu campo',
       subtitle:
         'Agende uma demonstração a campo com as plantadeiras Crucianelli Plantor 3.9 e 3.2 Brasil. Preencha os dados e nossa equipe entra em contato.',
       cta: 'Quero agendar minha demo',
@@ -28,6 +28,9 @@ export const translations = {
       subtitle:
         'Toque na sua região no mapa e escolha a cidade mais próxima. Assim direcionamos a demo para a equipe certa.',
       pickCity: 'Escolha a cidade mais próxima',
+      citySuggestions: 'Sugestões',
+      cityInputLabel: 'Ou digite o nome da sua cidade',
+      cityPlaceholder: 'Digite a sua cidade',
       selectedRegion: 'Região selecionada',
       selectedCity: 'Cidade',
       none: 'Nenhuma região selecionada ainda',
@@ -73,7 +76,7 @@ export const translations = {
     },
     hero: {
       kicker: 'Demostración de siembra',
-      title: 'Mirá la Plantor trabajando en tu campo',
+      title: 'Mirá la sembradora trabajando en tu campo',
       subtitle:
         'Agendá una demostración a campo con las sembradoras Crucianelli Plantor 3.9 y 3.2 Brasil. Completá tus datos y nuestro equipo te contacta.',
       cta: 'Quiero agendar mi demo',
@@ -93,6 +96,9 @@ export const translations = {
       subtitle:
         'Tocá tu región en el mapa y elegí la ciudad más cercana. Así derivamos la demo al equipo correcto.',
       pickCity: 'Elegí la ciudad más cercana',
+      citySuggestions: 'Sugerencias',
+      cityInputLabel: 'O escribí el nombre de tu ciudad',
+      cityPlaceholder: 'Escribí tu ciudad',
       selectedRegion: 'Región seleccionada',
       selectedCity: 'Ciudad',
       none: 'Todavía no seleccionaste ninguna región',

@@ -123,7 +123,8 @@ export default function DemoForm({ selectedMachine, selectedRegion, selectedCity
     } else if (field.type === 'textarea') {
       control = <textarea rows={3} {...common} className={inputCls(error) + ' resize-none'} />
     } else {
-      control = <input type={field.type === 'number' ? 'number' : 'text'} {...common} className={inputCls(error)} />
+      const inputType = field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'
+      control = <input type={inputType} {...common} className={inputCls(error)} />
     }
     return (
       <Field key={field.key} label={field.label[lang]} required={field.required} error={error}>

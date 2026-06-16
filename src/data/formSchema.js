@@ -46,7 +46,6 @@ export const formSchema = [
       { key: 'dosisFertilizacion', type: 'text', label: { pt: 'Dose de fertilização (kg/ha)', es: 'Dosis de fertilización (kg/ha)' } },
       { key: 'aplicaInoculante', type: 'select', options: SINO, label: { pt: 'Aplicação de inoculante', es: 'Aplicación de inoculante' } },
       { key: 'dosisInoculante', type: 'text', label: { pt: 'Dose de inoculante (L/ha)', es: 'Dosis de inoculante (Lt/ha)' } },
-      { key: 'siembraBrachiaria', type: 'text', label: { pt: 'Semeadura de braquiária (Sim - Não - Dose)', es: 'Siembra de brachiaria (Sí - No - Dosis)' } },
       { key: 'velocidadTrabajo', type: 'number', label: { pt: 'Velocidade de trabalho habitual (km/h)', es: 'Velocidad de trabajo habitual (Km/h)' } },
     ],
   },
@@ -54,11 +53,16 @@ export const formSchema = [
     id: 'lote',
     title: { pt: 'Lote / Talhão a semear', es: 'Lote a sembrar' },
     fields: [
-      { key: 'cantidadHas', type: 'number', label: { pt: 'Quantidade de hectares', es: 'Cantidad de hectáreas' } },
+      { key: 'cantidadHas', type: 'number', label: { pt: 'Quantidade de hectares a plantar', es: 'Cantidad de hectáreas a plantar' } },
       {
-        key: 'ventanaSiembra',
-        type: 'text',
-        label: { pt: 'Janela de semeadura (início e fim - estimada)', es: 'Ventana de siembra (inicio y fin - estimada)' },
+        key: 'ventanaSiembraInicio',
+        type: 'date',
+        label: { pt: 'Janela de semeadura — início (estimada)', es: 'Ventana de siembra — inicio (estimada)' },
+      },
+      {
+        key: 'ventanaSiembraFin',
+        type: 'date',
+        label: { pt: 'Janela de semeadura — fim (estimada)', es: 'Ventana de siembra — fin (estimada)' },
       },
       { key: 'cultivoAntecesor', type: 'text', label: { pt: 'Cultura antecessora (palhada)', es: 'Cultivo antecesor (rastrojo)' } },
       {

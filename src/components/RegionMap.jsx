@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ComposableMap, Geographies, Geography } from 'react-simple-maps'
-import { geoMercator } from 'd3-geo'
+import { geoMercator, geoPath } from 'd3-geo'
 import { useLang } from '../context/LanguageContext'
 import { regions, regionById, operatingStates } from '../data/regions'
 import SectionHeading from './SectionHeading'
@@ -13,6 +12,16 @@ const H = 600
 const POINTS = {
   type: 'FeatureCollection',
   features: regions.map((r) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: r.coords } })),
+}
+
+// El GeoJSON viene con los anillos en sentido contrario al que espera d3-geo, por lo que
+// interpretaba cada estado como "toda la esfera menos la región" (paths gigantes/invisibles).
+// Invertimos los anillos para que dibuje el polígono correcto.
+const reverseRings = (geom) => {
+  if (geom.type === 'Polygon') return { ...geom, coordinates: geom.coordinates.map((r) => [...r].reverse()) }
+  if (geom.type === 'MultiPolygon')
+    return { ...geom, coordinates: geom.coordinates.map((poly) => poly.map((r) => [...r].reverse())) }
+  return geom
 }
 
 export default function RegionMap({ selectedRegion, selectedCity, onSelectRegion, onSelectCity }) {
@@ -33,25 +42,32 @@ export default function RegionMap({ selectedRegion, selectedCity, onSelectRegion
     }
   }, [])
 
-  // Calculamos centro + escala ajustados a las regiones, y los pasamos a react-simple-maps
-  // por la vía soportada (string + projectionConfig). Reconstruimos la MISMA proyección
-  // para ubicar los pines, así contornos y pines quedan perfectamente alineados.
-  const { projectionConfig, project } = useMemo(() => {
-    const base = geoMercator().fitExtent([[150, 110], [W - 150, H - 120]], POINTS)
-    const scale = base.scale()
-    const center = base.invert([W / 2, H / 2])
-    const proj = geoMercator().center(center).scale(scale).translate([W / 2, H / 2])
-    return { projectionConfig: { center, scale }, project: proj }
-  }, [])
+  // Proyección ÚNICA ajustada a las regiones. La usamos para generar los paths de los
+  // estados (geoPath) y para ubicar los pines, así contornos y pines comparten exactamente
+  // la misma transformación.
+  const projection = useMemo(
+    () => geoMercator().fitExtent([[150, 110], [W - 150, H - 120]], POINTS),
+    []
+  )
 
   const pins = useMemo(
     () =>
       regions.map((r) => {
-        const [x, y] = project(r.coords)
+        const [x, y] = projection(r.coords)
         return { ...r, px: (x / W) * 100, py: (y / H) * 100 }
       }),
-    [project]
+    [projection]
   )
+
+  // Generamos los paths SVG nosotros mismos con geoPath + nuestra proyección.
+  // (Evita que la librería del mapa reescale los contornos por su cuenta.)
+  const shapes = useMemo(() => {
+    if (!geo) return []
+    const pathGen = geoPath(projection)
+    return geo.features
+      .map((f) => ({ sig: f.properties.sigla, d: pathGen({ ...f, geometry: reverseRings(f.geometry) }) }))
+      .filter((s) => s.d)
+  }, [geo, projection])
 
   const activeState = activeRegion?.state
 
@@ -78,46 +94,41 @@ export default function RegionMap({ selectedRegion, selectedCity, onSelectRegion
               <div className="relative overflow-hidden rounded-xl border border-cruci-iron/70 bg-cruci-ink blueprint">
                 <div className="pointer-events-none absolute inset-0 glow-red opacity-40" />
 
-                <ComposableMap
-                  projection="geoMercator"
-                  projectionConfig={projectionConfig}
-                  width={W}
-                  height={H}
+                <svg
+                  viewBox={`0 0 ${W} ${H}`}
                   style={{ width: '100%', height: 'auto', display: 'block' }}
                 >
-                  {geo && (
-                    <Geographies geography={geo}>
-                      {({ geographies }) =>
-                        geographies.map((g) => {
-                          const sig = g.properties.sigla
-                          const isOp = operatingStates.has(sig)
-                          const isActive = sig === activeState
-                          return (
-                            <Geography
-                              key={g.rsmKey}
-                              geography={g}
-                              tabIndex={-1}
-                              style={{
-                                default: {
-                                  fill: isActive ? '#e30613' : isOp ? '#7a0f18' : '#23232c',
-                                  stroke: '#000000',
-                                  strokeWidth: isOp ? 1.4 : 1,
-                                  strokeLinejoin: 'round',
-                                  outline: 'none',
-                                  pointerEvents: 'none',
-                                  filter: isActive ? 'drop-shadow(0 0 7px rgba(227,6,19,0.65))' : 'none',
-                                  transition: 'fill .25s ease',
-                                },
-                                hover: { outline: 'none', pointerEvents: 'none' },
-                                pressed: { outline: 'none' },
-                              }}
-                            />
-                          )
-                        })
-                      }
-                    </Geographies>
-                  )}
-                </ComposableMap>
+                  {/* Fondo del lienzo en el MISMO gris que los estados no-operativos: así el
+                      territorio fuera de Brasil (sin polígono) se funde en un gris uniforme. */}
+                  <rect x={0} y={0} width={W} height={H} fill="#2c2c38" />
+                  {shapes.map((s) => {
+                    const isOp = operatingStates.has(s.sig)
+                    const isActive = s.sig === activeState
+                    // 3 niveles de contraste: resto de Brasil (gris) · operativos (rojo) · activo (rojo intenso)
+                    const fill = isActive ? '#e30613' : isOp ? '#9a1420' : '#2c2c38'
+                    const stroke = isActive ? '#ffd7da' : isOp ? '#e8434f' : '#52525f'
+                    const strokeWidth = isActive ? 1.6 : isOp ? 1.2 : 0.7
+                    return (
+                      <path
+                        key={s.sig}
+                        d={s.d}
+                        fill={fill}
+                        stroke={stroke}
+                        strokeWidth={strokeWidth}
+                        strokeLinejoin="round"
+                        style={{
+                          pointerEvents: 'none',
+                          transition: 'fill .25s ease, stroke .25s ease',
+                          filter: isActive
+                            ? 'drop-shadow(0 0 9px rgba(227,6,19,0.85))'
+                            : isOp
+                              ? 'drop-shadow(0 0 4px rgba(227,6,19,0.3))'
+                              : 'none',
+                        }}
+                      />
+                    )
+                  })}
+                </svg>
 
                 {/* Pines de región (HTML → etiquetas siempre nítidas) */}
                 <div className="absolute inset-0">
@@ -177,6 +188,22 @@ export default function RegionMap({ selectedRegion, selectedCity, onSelectRegion
                 )}
               </div>
 
+              {/* Leyenda: deja explícita la diferenciación de zonas */}
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 font-mono text-[10px] uppercase tracking-wide text-cruci-ash">
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-sm border border-[#e8434f] bg-[#9a1420]" />
+                  {lang === 'pt' ? 'Onde atuamos' : 'Donde operamos'}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-sm border border-[#52525f] bg-[#2c2c38]" />
+                  {lang === 'pt' ? 'Demais estados' : 'Resto de estados'}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-full border-2 border-white bg-cruci-red" />
+                  {lang === 'pt' ? 'Região selecionada' : 'Región seleccionada'}
+                </span>
+              </div>
+
               <p className="mt-3 text-center font-mono text-[10px] uppercase tracking-wide text-cruci-ash">
                 {t.region.hint}
               </p>
@@ -204,7 +231,10 @@ export default function RegionMap({ selectedRegion, selectedCity, onSelectRegion
                   <p className="mt-7 font-mono text-[11px] uppercase tracking-[0.2em] text-cruci-ash">
                     {t.region.pickCity}
                   </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  <p className="mt-3 font-mono text-[9px] uppercase tracking-[0.25em] text-cruci-ash/70">
+                    {t.region.citySuggestions}
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
                     {activeRegion.cities.map((city) => {
                       const onc = selectedCity === city
                       return (
@@ -223,6 +253,18 @@ export default function RegionMap({ selectedRegion, selectedCity, onSelectRegion
                       )
                     })}
                   </div>
+
+                  {/* Campo libre: el productor puede tipear cualquier ciudad */}
+                  <label className="mt-5 block font-mono text-[10px] uppercase tracking-[0.2em] text-cruci-ash">
+                    {t.region.cityInputLabel}
+                  </label>
+                  <input
+                    type="text"
+                    value={selectedCity}
+                    onChange={(e) => onSelectCity(e.target.value)}
+                    placeholder={t.region.cityPlaceholder}
+                    className="mt-2 w-full rounded-xl border border-cruci-iron bg-cruci-ink px-4 py-3 text-sm text-cruci-paper placeholder:text-cruci-ash/50 transition focus:border-cruci-red focus:outline-none focus:ring-1 focus:ring-cruci-red"
+                  />
 
                   {selectedCity && (
                     <div className="mt-auto pt-7">
