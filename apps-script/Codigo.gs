@@ -22,9 +22,9 @@ var COLUMN_ORDER = [
   'cantLineas', 'separacion', 'anchoTpte',
   // Produtos a aplicar
   'cultivo', 'tratamientoSemilla', 'dosisSiembra', 'fertilizante', 'dosisFertilizacion',
-  'aplicaInoculante', 'dosisInoculante', 'siembraBrachiaria', 'velocidadTrabajo',
+  'aplicaInoculante', 'dosisInoculante', 'velocidadTrabajo',
   // Lote / Talhão
-  'cantidadHas', 'ventanaSiembra', 'cultivoAntecesor', 'desniveles', 'obstaculos',
+  'cantidadHas', 'ventanaSiembraInicio', 'ventanaSiembraFin', 'cultivoAntecesor', 'desniveles', 'obstaculos',
   'humedadSuelo', 'riegoArtificial', 'estadoCaminos', 'siembraConsociada',
   // Trator
   'tractorMarca', 'tractorModelo', 'potencia', 'caudalHidraulico', 'cantVcr',
@@ -54,11 +54,11 @@ var COLUMN_LABELS = {
   dosisFertilizacion: 'Dose de fertilização (kg/ha)',
   aplicaInoculante: 'Aplica inoculante',
   dosisInoculante: 'Dose de inoculante (L/ha)',
-  siembraBrachiaria: 'Semeadura de braquiária',
   velocidadTrabajo: 'Velocidade de trabalho (km/h)',
   // Lote
-  cantidadHas: 'Hectares',
-  ventanaSiembra: 'Janela de semeadura',
+  cantidadHas: 'Hectares a plantar',
+  ventanaSiembraInicio: 'Janela de semeadura — início',
+  ventanaSiembraFin: 'Janela de semeadura — fim',
   cultivoAntecesor: 'Cultura antecessora',
   desniveles: 'Desníveis',
   obstaculos: 'Obstáculos no terreno',

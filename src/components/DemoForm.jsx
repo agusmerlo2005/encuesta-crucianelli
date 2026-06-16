@@ -5,8 +5,9 @@ import { formSchema, allFieldKeys } from '../data/formSchema'
 import SectionHeading from './SectionHeading'
 import Reveal from './Reveal'
 
-// 👉 Pegá acá la URL del Web App de Apps Script cuando lo tengamos listo.
-const SHEETS_WEB_APP_URL = ''
+// URL del Web App de Apps Script (Google Sheets). Se carga desde una env var
+// (VITE_SHEETS_WEB_APP_URL): localmente en .env, en producción en Vercel.
+const SHEETS_WEB_APP_URL = import.meta.env.VITE_SHEETS_WEB_APP_URL || ''
 
 const buildEmpty = () => Object.fromEntries(allFieldKeys.map((k) => [k, '']))
 
