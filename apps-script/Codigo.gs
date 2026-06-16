@@ -89,6 +89,11 @@ function doPost(e) {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName(SHEET_NAME) || ss.insertSheet(SHEET_NAME);
 
+    // Formateamos la fecha/hora a la zona horaria de la planilla, sin la "Z" de UTC.
+    var tz = ss.getSpreadsheetTimeZone();
+    var when = data.submittedAt ? new Date(data.submittedAt) : new Date();
+    data.submittedAt = Utilities.formatDate(when, tz, 'dd/MM/yyyy HH:mm:ss');
+
     // Determina las columnas: las del header actual + cualquier key nueva del payload.
     var headers = getOrInitHeaders_(sheet, data);
 
@@ -98,6 +103,8 @@ function doPost(e) {
       return v === undefined || v === null ? '' : v;
     });
     sheet.appendRow(row);
+    // Alineamos a la izquierda la fila recién agregada (números/fechas incluidos).
+    sheet.getRange(sheet.getLastRow(), 1, 1, row.length).setHorizontalAlignment('left');
 
     return jsonOut_({ ok: true });
   } catch (err) {
@@ -179,7 +186,8 @@ function writeHeader_(sheet, keys) {
     .getRange(1, 1, 1, keys.length)
     .setBackground('#e30613')
     .setFontColor('#ffffff')
-    .setFontWeight('bold');
+    .setFontWeight('bold')
+    .setHorizontalAlignment('left');
   sheet.setFrozenRows(1);
 }
 
